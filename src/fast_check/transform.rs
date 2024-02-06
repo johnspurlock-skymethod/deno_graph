@@ -142,12 +142,14 @@ impl CommentsMut {
 pub struct FastCheckModule {
   pub module_info: ModuleInfo,
   pub text: String,
+  pub dts_text: Option<String>,
   pub source_map: Vec<u8>,
 }
 
 pub struct TransformOptions<'a> {
   pub workspace_members: &'a [WorkspaceMember],
   pub should_error_on_first_diagnostic: bool,
+  pub generate_dts: bool,
 }
 
 pub fn transform(
@@ -177,6 +179,13 @@ pub fn transform(
     &comments,
   );
 
+  let dts_text = if options.generate_dts {
+    //
+    None
+  } else {
+    None
+  };
+
   // now emit
   let comments = comments.into_single_threaded();
   let (text, source_map) =
@@ -190,6 +199,7 @@ pub fn transform(
   Ok(FastCheckModule {
     module_info,
     text,
+    dts_text,
     source_map,
   })
 }

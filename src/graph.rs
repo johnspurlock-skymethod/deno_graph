@@ -815,6 +815,7 @@ pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
   pub source_map: Arc<[u8]>,
+  pub dts: Option<Arc<str>>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -2761,6 +2762,7 @@ struct Builder<'a, 'graph> {
   #[cfg_attr(not(feature = "fast_check"), allow(dead_code))]
   workspace_fast_check: bool,
   workspace_members: Vec<WorkspaceMember>,
+  fast_check_dts: bool,
   diagnostics: Vec<BuildDiagnostic>,
 }
 
@@ -2800,6 +2802,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       fill_pass_mode,
       workspace_fast_check,
       workspace_members,
+      fast_check_dts: true,
       diagnostics: Vec::new(),
     };
     builder.fill(roots, imports).await;
@@ -3963,6 +3966,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           &[]
         },
         should_error_on_first_diagnostic: !self.workspace_fast_check,
+        generate_dts: self.fast_check_dts,
       },
     );
     for (specifier, fast_check_module_result) in modules {
@@ -3992,6 +3996,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             dependencies,
             source: fast_check_module.text.into(),
             source_map: fast_check_module.source_map.into(),
+            dts: if let Some(dts_text) = fast_check_module.dts_text {
+              Some(dts_text.into())
+            } else {
+              None
+            },
           }))
         }
         Err(diagnostic) => FastCheckTypeModuleSlot::Error(diagnostic),
